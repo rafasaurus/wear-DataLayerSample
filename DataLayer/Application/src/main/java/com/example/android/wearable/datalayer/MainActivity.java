@@ -111,6 +111,7 @@ public class MainActivity extends Activity implements DataApi.DataListener,
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
+        startService(new Intent(this,MobileWearableService.class));
     }
 
     @Override
