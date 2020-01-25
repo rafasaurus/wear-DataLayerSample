@@ -101,7 +101,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         super.onResume();
         mGoogleApiClient.connect();
         mDataItemGeneratorFuture = mGeneratorExecutor.scheduleWithFixedDelay(
-                new DataItemGenerator(), 1, 4, TimeUnit.MILLISECONDS);
+                new DataItemGenerator(), 1, 100, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
-        LOGD(TAG, "onDataChanged(): " + dataEvents);
+        // LOGD(TAG, "onDataChanged(): " + dataEvents);
 
         final List<DataEvent> events = FreezableUtils.freezeIterable(dataEvents);
         dataEvents.close();
@@ -163,13 +163,13 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
                             mLayout.setBackground(new BitmapDrawable(getResources(), bitmap));
                         }
                     });
-
-                } else if (DataLayerListenerService.COUNT_PATH.equals(path)) {
-                    LOGD(TAG, "Data Changed for COUNT_PATH");
-                    // generateEvent("DataItem Changed", event.getDataItem().toString());
-                } else {
-                    LOGD(TAG, "Unrecognized path: " + path);
                 }
+                // } else if (DataLayerListenerService.COUNT_PATH.equals(path)) {
+                //     // LOGD(TAG, "Data Changed for COUNT_PATH");
+                //     generateEvent("DataItem Changed", event.getDataItem().toString());
+                // } else {
+                //     LOGD(TAG, "Unrecognized path: " + path);
+                // }
 
             } else if (event.getType() == DataEvent.TYPE_DELETED) {
                 generateEvent("DataItem Deleted", event.getDataItem().toString());
@@ -200,8 +200,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
     @Override
     public void onMessageReceived(MessageEvent event) {
-        LOGD(TAG, "onMessageReceived: " + event);
-        generateEvent("Message", event.toString());
+        // LOGD(TAG, "onMessageReceived: " + event);
+        // generateEvent("Message", event.toString());
     }
 
     @Override
@@ -225,7 +225,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
             putDataMapRequest.getDataMap().putInt(COUNT_KEY, count++);
             PutDataRequest request = putDataMapRequest.asPutDataRequest();
 
-            LOGD(TAG, "Generating DataItem: " + request);
+            // LOGD(TAG, "Generating DataItem: " + request);
             if (!mGoogleApiClient.isConnected()) {
                 return;
             }

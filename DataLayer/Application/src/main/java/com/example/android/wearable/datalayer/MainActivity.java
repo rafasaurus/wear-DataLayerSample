@@ -51,6 +51,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.google.android.gms.wearable.DataMapItem;
 /**
  * Receives its own events using a listener API designed for foreground activities. Updates a data
  * item every second while it is open. Also allows user to take a photo and send that as an asset to
@@ -205,9 +206,21 @@ public class MainActivity extends Activity implements DataApi.DataListener,
             @Override
             public void run() {
                 for (DataEvent event : events) {
+                    String eventUri = event.getDataItem().getUri().toString();
+                    if (eventUri.contains (COUNT_PATH)) {
+
+                        DataMapItem dataItem = DataMapItem.fromDataItem (event.getDataItem());
+                        int data = dataItem.getDataMap().getInt("count");
+
+                        Log.d("Data: ", Integer.toString(data));
+
+                        // myListener.onDataReceived(data);
+                    }
+
                     if (event.getType() == DataEvent.TYPE_CHANGED) {
                         mDataItemListAdapter.add(
                                 new Event("DataItem Changed", event.getDataItem().toString()));
+                        Log.d(TAG, "myDebug: " + event.getDataItem().getUri().toString());
                     } else if (event.getType() == DataEvent.TYPE_DELETED) {
                         mDataItemListAdapter.add(
                                 new Event("DataItem Deleted", event.getDataItem().toString()));
