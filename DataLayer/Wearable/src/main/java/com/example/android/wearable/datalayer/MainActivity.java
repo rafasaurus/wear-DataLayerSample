@@ -37,6 +37,15 @@ import com.google.android.gms.wearable.Wearable;
 import java.io.InputStream;
 import java.util.List;
 
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.DataApi.DataItemResult;
 /**
  * Shows events and photo from the Wearable APIs.
  */
@@ -53,6 +62,16 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     private View mLayout;
     private Handler mHandler;
 
+    // Send DataItems.
+    private ScheduledExecutorService mGeneratorExecutor;
+    private ScheduledFuture<?> mDataItemGeneratorFuture;
+
+    // private static final String START_ACTIVITY_PATH = "/start-activity";
+    private static final String COUNT_PATH = "/count1";
+    // private static final String IMAGE_PATH = "/image";
+    // private static final String IMAGE_KEY = "photo";
+    private static final String COUNT_KEY = "count";
+
     @Override
     public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -68,6 +87,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         mDataItemListAdapter = new DataItemAdapter(this, android.R.layout.simple_list_item_1);
         mDataItemList.setAdapter(mDataItemListAdapter);
 
+        mGeneratorExecutor = new ScheduledThreadPoolExecutor(1);
+
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
@@ -79,6 +100,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     protected void onResume() {
         super.onResume();
         mGoogleApiClient.connect();
+        mDataItemGeneratorFuture = mGeneratorExecutor.scheduleWithFixedDelay(
+                new DataItemGenerator(), 1, 4, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -88,6 +111,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         Wearable.MessageApi.removeListener(mGoogleApiClient, this);
         Wearable.NodeApi.removeListener(mGoogleApiClient, this);
         mGoogleApiClient.disconnect();
+        mDataItemGeneratorFuture.cancel(true /* mayInterruptIfRunning */);
     }
 
     @Override
@@ -142,7 +166,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
                 } else if (DataLayerListenerService.COUNT_PATH.equals(path)) {
                     LOGD(TAG, "Data Changed for COUNT_PATH");
-                    generateEvent("DataItem Changed", event.getDataItem().toString());
+                    // generateEvent("DataItem Changed", event.getDataItem().toString());
                 } else {
                     LOGD(TAG, "Unrecognized path: " + path);
                 }
@@ -185,9 +209,37 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         generateEvent("Node Connected", node.getId());
     }
 
-    @Override
+
     public void onPeerDisconnected(Node node) {
         generateEvent("Node Disconnected", node.getId());
+    }
+
+    /** Generates a DataItem based on an incrementing count. */
+    private class DataItemGenerator implements Runnable {
+
+        private int count = 0;
+
+        @Override
+        public void run() {
+            PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(COUNT_PATH);
+            putDataMapRequest.getDataMap().putInt(COUNT_KEY, count++);
+            PutDataRequest request = putDataMapRequest.asPutDataRequest();
+
+            LOGD(TAG, "Generating DataItem: " + request);
+            if (!mGoogleApiClient.isConnected()) {
+                return;
+            }
+            Wearable.DataApi.putDataItem(mGoogleApiClient, request)
+                    .setResultCallback(new ResultCallback<DataItemResult>() {
+                        @Override
+                        public void onResult(DataItemResult dataItemResult) {
+                            if (!dataItemResult.getStatus().isSuccess()) {
+                                Log.e(TAG, "ERROR: failed to putDataItem, status code: "
+                                        + dataItemResult.getStatus().getStatusCode());
+                            }
+                        }
+                    });
+        }
     }
 
     private static class DataItemAdapter extends ArrayAdapter<Event> {

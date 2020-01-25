@@ -66,7 +66,7 @@ public class MainActivity extends Activity implements DataApi.DataListener,
     private static final int REQUEST_RESOLVE_ERROR = 1000;
 
     private static final String START_ACTIVITY_PATH = "/start-activity";
-    private static final String COUNT_PATH = "/count";
+    private static final String COUNT_PATH = "/count1";
     private static final String IMAGE_PATH = "/image";
     private static final String IMAGE_KEY = "photo";
     private static final String COUNT_KEY = "count";
@@ -133,8 +133,8 @@ public class MainActivity extends Activity implements DataApi.DataListener,
     @Override
     public void onResume() {
         super.onResume();
-        mDataItemGeneratorFuture = mGeneratorExecutor.scheduleWithFixedDelay(
-                new DataItemGenerator(), 1, 5, TimeUnit.SECONDS);
+        // mDataItemGeneratorFuture = mGeneratorExecutor.scheduleWithFixedDelay(
+        //         new DataItemGenerator(), 1, 100, TimeUnit.SECONDS);
     }
 
     @Override
@@ -359,7 +359,7 @@ public class MainActivity extends Activity implements DataApi.DataListener,
         @Override
         public void run() {
             PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(COUNT_PATH);
-            putDataMapRequest.getDataMap().putInt(COUNT_KEY, count++);
+            putDataMapRequest.getDataMap().putInt(COUNT_KEY, count);
             PutDataRequest request = putDataMapRequest.asPutDataRequest();
 
             LOGD(TAG, "Generating DataItem: " + request);
