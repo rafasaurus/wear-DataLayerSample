@@ -125,8 +125,27 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         Task.callInBackground(new Callable<Void>() {
             public Void call() {
                 // Do a bunch of stuff.
+                int count = 0;
                 while(running) {
-                    Log.d("data", "THREAD IS RUNNING");
+                    // Log.d("data", "THREAD IS RUNNING");
+                    PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(COUNT_PATH);
+                    putDataMapRequest.getDataMap().putInt(COUNT_KEY, count++);
+                    PutDataRequest request = putDataMapRequest.asPutDataRequest();
+
+                    // LOGD(TAG, "Generating DataItem: " + request);
+                    if (!mGoogleApiClient.isConnected()) {
+                        continue;
+                    }
+                    Wearable.DataApi.putDataItem(mGoogleApiClient, request)
+                            .setResultCallback(new ResultCallback<DataItemResult>() {
+                                @Override
+                                public void onResult(DataItemResult dataItemResult) {
+                                    if (!dataItemResult.getStatus().isSuccess()) {
+                                        Log.e(TAG, "ERROR: failed to putDataItem, status code: "
+                                                + dataItemResult.getStatus().getStatusCode());
+                                    }
+                                }
+                            });
                 }
                 Log.d("data", "THREAD IS STOPED");
                 return null;
@@ -142,7 +161,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         Wearable.NodeApi.removeListener(mGoogleApiClient, this);
         mGoogleApiClient.disconnect();
         // mDataItemGeneratorFuture.cancel(true /* mayInterruptIfRunning */);
-        running = false;
+        // running = false;
     }
 
     @Override
@@ -249,9 +268,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
     /** Generates a DataItem based on an incrementing count. */
     private class DataItemGenerator implements Runnable {
-
         private int count = 0;
-
         @Override
         public void run() {
             PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(COUNT_PATH);
