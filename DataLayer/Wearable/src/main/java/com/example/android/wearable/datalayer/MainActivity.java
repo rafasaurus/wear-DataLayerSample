@@ -37,15 +37,20 @@ import com.google.android.gms.wearable.Wearable;
 import java.io.InputStream;
 import java.util.List;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi.DataItemResult;
+
+import bolts.CancellationTokenSource;
+import bolts.Continuation;
+import bolts.Task;
+
 /**
  * Shows events and photo from the Wearable APIs.
  */
@@ -71,6 +76,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     // private static final String IMAGE_PATH = "/image";
     // private static final String IMAGE_KEY = "photo";
     private static final String COUNT_KEY = "count";
+
+    private static boolean running = true;
 
     @Override
     public void onCreate(Bundle b) {
@@ -100,8 +107,30 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     protected void onResume() {
         super.onResume();
         mGoogleApiClient.connect();
-        mDataItemGeneratorFuture = mGeneratorExecutor.scheduleWithFixedDelay(
-                new DataItemGenerator(), 1, 100, TimeUnit.MILLISECONDS);
+        // mDataItemGeneratorFuture = mGeneratorExecutor.scheduleWithFixedDelay(
+        //         new DataItemGenerator(), 1, 100, TimeUnit.MILLISECONDS);
+    }
+    /// public class doSomething implements Callable<Boolean> {
+    ///     @Override
+    ///     public Boolean call() throws Exception {
+    ///         // TODO something...
+    ///         while(true) {
+    ///             LOGD(TAG, "THREADING...");
+    ///         }
+    ///         // return true;
+    ///     }
+    public void getData() {
+        // CancellationTokenSource cts = new CancellationTokenSource();
+        running = true;
+        Task.callInBackground(new Callable<Void>() {
+            public Void call() {
+                // Do a bunch of stuff.
+                while(running) {
+                    LOGD(TAG, "THREAD IS RUNNING");
+                }
+                return null;
+            }
+        });
     }
 
     @Override
@@ -111,7 +140,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         Wearable.MessageApi.removeListener(mGoogleApiClient, this);
         Wearable.NodeApi.removeListener(mGoogleApiClient, this);
         mGoogleApiClient.disconnect();
-        mDataItemGeneratorFuture.cancel(true /* mayInterruptIfRunning */);
+        // mDataItemGeneratorFuture.cancel(true /* mayInterruptIfRunning */);
+        running = false;
     }
 
     @Override
@@ -120,6 +150,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
         Wearable.NodeApi.addListener(mGoogleApiClient, this);
+        running = true;
+        getData();
     }
 
     @Override
