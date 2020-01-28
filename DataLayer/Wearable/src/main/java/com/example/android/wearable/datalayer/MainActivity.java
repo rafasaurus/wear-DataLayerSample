@@ -126,8 +126,9 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
             public Void call() {
                 // Do a bunch of stuff.
                 while(running) {
-                    LOGD(TAG, "THREAD IS RUNNING");
+                    Log.d("data", "THREAD IS RUNNING");
                 }
+                Log.d("data", "THREAD IS STOPED");
                 return null;
             }
         });
