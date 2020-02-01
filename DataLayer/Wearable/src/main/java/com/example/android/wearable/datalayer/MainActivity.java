@@ -79,6 +79,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
     private static boolean running = true;
 
+
     @Override
     public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -101,6 +102,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
+        running = true;
+        sendData();
     }
 
     @Override
@@ -119,19 +122,18 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     ///         }
     ///         // return true;
     ///     }
-    public void getData() {
-        // CancellationTokenSource cts = new CancellationTokenSource();
+
+    public void sendData() {
         running = true;
         Task.callInBackground(new Callable<Void>() {
             public Void call() {
                 // Do a bunch of stuff.
                 int count = 0;
+                PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(COUNT_PATH);
+                PutDataRequest request = putDataMapRequest.asPutDataRequest();
                 while(running) {
-                    // Log.d("data", "THREAD IS RUNNING");
-                    PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(COUNT_PATH);
                     putDataMapRequest.getDataMap().putInt(COUNT_KEY, count++);
-                    PutDataRequest request = putDataMapRequest.asPutDataRequest();
-
+                    request = putDataMapRequest.asPutDataRequest();
                     // LOGD(TAG, "Generating DataItem: " + request);
                     if (!mGoogleApiClient.isConnected()) {
                         continue;
@@ -161,7 +163,17 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         Wearable.NodeApi.removeListener(mGoogleApiClient, this);
         mGoogleApiClient.disconnect();
         // mDataItemGeneratorFuture.cancel(true /* mayInterruptIfRunning */);
-        // running = false;
+    }
+
+    @Override
+    protected void onStop() {
+        running = false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        running = false;
+        super.onDestroy();
     }
 
     @Override
@@ -170,8 +182,6 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
         Wearable.NodeApi.addListener(mGoogleApiClient, this);
-        running = true;
-        getData();
     }
 
     @Override
